@@ -20,14 +20,12 @@ pipeline {
 
         stage('Build Java Project') {
             steps {
-                // Ensure Maven is installed on your Jenkins agent
                 sh 'mvn clean package'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                // Build the Docker image; Dockerfile should be present in the repository
                 sh """
                 docker build -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}:${DOCKER_TAG} .
                 """
@@ -36,11 +34,11 @@ pipeline {
 
         stage('Push Docker Image to Docker Hub') {
             steps {
-                // Ensure you have added your Docker Hub credentials in Jenkins with the ID 'docker-hub-credentials'
                 withDockerRegistry([credentialsId: 'docker-hub-credentials', url: 'https://index.docker.io/v1/']) {
                     sh """
                     docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}:${DOCKER_TAG}
-                    docker stop \$(docker ps -a) ||true && docker pull ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                    docker stop ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}:${DOCKER_TAG} ||true && docker rm -f ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                    docker pull ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}:${DOCKER_TAG}
                     docker run -d -p 8082:8080 ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}:${DOCKER_TAG}
                     """
                     
